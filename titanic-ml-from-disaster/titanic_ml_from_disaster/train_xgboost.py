@@ -25,11 +25,11 @@ def train_xgboost(train: pl.DataFrame) -> None:
     accuracy = accuracy_score(y, y_pred)
     print(f"Module accuracy on training set - {accuracy * 100:.2f}%")
 
-    model_f_path = _MODELS / "model_features_sex.json"
+    model_f_path = _MODELS / "model_features_sex_agestatus.json"
     print(f"Saving model to {model_f_path}")
     model.save_model(model_f_path)
 
 
 if __name__ == "__main__":
-    training_data = pl.read_csv(_TRANSFORMED / "train_features_sex.csv")
+    training_data = pl.read_csv(_TRANSFORMED / "train_features_sex_agestatus.csv")
     train_xgboost(training_data)
