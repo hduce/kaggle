@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "titantic-ml-from-disaster"
+version = "0.1.0"
+description = ""
+authors = ["hduce <harry.duce@gmail.com>"]
+readme = "README.md"
+packages = [{include = "titantic_ml_from_disaster"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
