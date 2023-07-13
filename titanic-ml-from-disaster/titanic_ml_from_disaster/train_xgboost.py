@@ -9,7 +9,7 @@ _MODELS = Path(__file__).parent.parent / "models"
 
 
 def train_xgboost(train: pl.DataFrame) -> None:
-    x = train.select(pl.col("*").exclude("Label")).to_numpy()
+    x = train.select(pl.col("*").exclude("Label", "PassengerId")).to_numpy()
     y = train.select(pl.col("Label")).to_numpy()
 
     print(f"X input shape - {x.shape}")
