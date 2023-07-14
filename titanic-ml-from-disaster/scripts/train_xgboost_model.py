@@ -78,11 +78,15 @@ if __name__ == "__main__":
         x, y, test_size=0.3, random_state=99
     )
 
+    # Just to be safe
+    del x, y
+
     print(f"X_train input shape - {X_train.shape}")
     print(f"y_train labels shape - {y_train.shape}")
 
     model: xgb.sklearn.XGBClassifier = xgb.XGBClassifier(
-        learning_rate=1.0,
+        learning_rate=0.5,
+        n_estimators=120,
     )
 
     model.fit(X_train, y_train)
@@ -101,3 +105,27 @@ if __name__ == "__main__":
     model_f_path = _MODELS / "model.json"
     print(f"Saving model to {model_f_path}")
     model.save_model(model_f_path)
+
+    ## Test data
+    test_all_df = pl.read_csv(_TRANSFORMED / "test.csv")
+    test_features = _prep_features(test_all_df)
+    print(f"Prepped test features {test_features.head(3)}")
+
+    print("Filling Cabin_T and EmbarkedUnknown columns")
+    test_features = test_features.with_columns(
+        pl.lit(0).alias("Cabin_T"),
+        pl.lit(0).alias("Embarked_unknown"),
+    )
+
+    X_test = test_features.to_numpy()
+    print(f"X_test input shape - {X_test.shape}")
+
+    y_test_pred = model.predict(X_test)
+    test_predictions = test_all_df.select(pl.col("PassengerId"))
+    test_predictions = test_predictions.hstack(
+        pl.from_numpy(y_test_pred, schema={"Survived": pl.Int8})
+    )
+
+    test_pred_f = _TRANSFORMED / "test_predictions.csv"
+    print(f"Writing test predictions to {test_pred_f}")
+    test_predictions.write_csv(test_pred_f)
