@@ -17,16 +17,22 @@ def _one_hot_encode_features(df: pl.DataFrame, features: List[str]) -> pl.DataFr
     return pl.from_pandas(df_1hot_encoded)
 
 
-def _prep_features(train: pl.DataFrame) -> pl.DataFrame:
-    feature_cols = [
-        "Sex",
-        "Age",
-        "Pclass",
-        "Parch",
-        "Cabin",
-        # "SibSp",
-    ]
-    features = train.select(pl.col(feature_cols)).with_columns(
+def _prep_features(df: pl.DataFrame) -> pl.DataFrame:
+    features = df.select(
+        pl.col(
+            [
+                "Sex",
+                "Age",
+                "Pclass",
+                "Parch",
+                "Cabin",
+                "SibSp",
+                "Fare",
+                "Embarked",
+            ],
+        )
+    )
+    features = features.with_columns(
         pl.when(pl.col("Age") < 18)
         .then("child")
         .when(pl.col("Age").is_null())
@@ -39,6 +45,12 @@ def _prep_features(train: pl.DataFrame) -> pl.DataFrame:
             pl.col("Cabin").str.slice(0, 1),
         )
         .alias("Cabin"),
+        pl.when(pl.col("Embarked").is_null())
+        .then("unknown")
+        .otherwise(
+            pl.col("Embarked"),
+        )
+        .alias("Embarked"),
     )
 
     return _one_hot_encode_features(
@@ -48,6 +60,7 @@ def _prep_features(train: pl.DataFrame) -> pl.DataFrame:
             "Age",
             "Pclass",
             "Cabin",
+            "Embarked",
         ],
     )
 
@@ -56,6 +69,7 @@ if __name__ == "__main__":
     raw_train_all = pl.read_csv(_TRANSFORMED / "train.csv")
 
     train_all = _prep_features(raw_train_all)
+    print(f"Prepped training features {train_all.head(3)}")
 
     x = train_all.to_numpy()
     y = raw_train_all.select(pl.col("Survived")).to_numpy()
@@ -66,10 +80,10 @@ if __name__ == "__main__":
 
     print(f"X_train input shape - {X_train.shape}")
     print(f"y_train labels shape - {y_train.shape}")
-    print(f"X_train[:3] - {X_train[:3]}")
-    print(f"y_train[:3] - {y_train[:3]}")
 
-    model: xgb.sklearn.XGBClassifier = xgb.XGBClassifier()
+    model: xgb.sklearn.XGBClassifier = xgb.XGBClassifier(
+        learning_rate=1.0,
+    )
 
     model.fit(X_train, y_train)
 
@@ -79,11 +93,9 @@ if __name__ == "__main__":
 
     print(f"X_cv input shape - {X_cv.shape}")
     print(f"y_cv labels shape - {y_cv.shape}")
-    print(f"X_cv[:3] - {X_cv[:3]}")
-    print(f"y_cv[:3] - {y_cv[:3]}")
 
-    y_pred = model.predict(x)
-    accuracy = accuracy_score(y, y_pred)
+    y_cv_pred = model.predict(X_cv)
+    accuracy = accuracy_score(y_cv, y_cv_pred)
 
     print(f"Module accuracy on cv data set - {accuracy * 100:.2f}%")
     model_f_path = _MODELS / "model.json"
