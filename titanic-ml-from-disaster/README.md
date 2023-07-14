@@ -1,3 +1,4 @@
+# Kaggle - Titanic - ML From Disaster
 
-TODO:
-* Test data doesn't have a label
+My first attempt at a Kaggle problem. Specifically [Titanic - ML from Disaster](Titanic - Machine Learning from Disaster).
+
